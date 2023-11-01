@@ -1,14 +1,11 @@
 package com.sample.keycloak.config;
 
-import com.nimbusds.jwt.JWT;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.session.SessionRegistryImpl;
@@ -19,9 +16,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
@@ -31,7 +26,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Configuration
-@EnableWebSecurity
+@EnableMethodSecurity
 class SecurityConfig {
 
     @Autowired
@@ -41,7 +36,7 @@ class SecurityConfig {
     protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
         return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
     }
-    @Order(1)
+
     @Bean
     public SecurityFilterChain clientFilterChain(HttpSecurity http) throws Exception {
         http.authorizeRequests()
@@ -65,11 +60,9 @@ class SecurityConfig {
         return (userRequest) -> {
             // Delegate to the default implementation for loading a user
             OidcUser oidcUser = delegate.loadUser(userRequest);
-
             OAuth2AccessToken accessToken = userRequest.getAccessToken();
-            System.out.println(accessToken.getTokenValue());
-
             Jwt jwt = jwtDecoder.decode(accessToken.getTokenValue());
+
             return new DefaultOidcUser(extractResourceRoles(jwt), oidcUser.getIdToken(), oidcUser.getUserInfo());
         };
     }
